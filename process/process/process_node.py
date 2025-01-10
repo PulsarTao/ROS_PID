@@ -50,7 +50,7 @@ class PID:
         output = self.kp * error + self.ki * self.integral + self.kd * derivative
         output = [max(min(ot, self.output_limits[1]), self.output_limits[0]) for ot in output]
         self.previous_error = error
-        print("output:",output)
+        # print("output:",output)
         return output
 
 
@@ -67,12 +67,12 @@ class ProcessNode(Node):
         self.msg_window = deque(maxlen=5)
         self.timer = self.create_timer(0.01, self.timer_callback)
         self.current = [0.0, 0.0, 0.0]
-        self.pid = PID(0.01, 0.00001, 0.00001, 0.01)
+        self.pid = PID(0.01, 0.001, 0.01, 0.01)
         # self.pid = IncrementalPID(1, 0.1, 0.01, 0.01)
 
     def listener_callback(self, msg):
         self.msg_window.append(msg)
-        # self.get_logger().info(f'Received message: count={msg.count}, time={msg.time},target={msg.target}')
+        self.get_logger().info(f'Received message: count={msg.count}, time={msg.time},target={msg.target}')
 
     def timer_callback(self):
         if self.msg_window:

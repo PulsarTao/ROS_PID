@@ -1,0 +1,6 @@
+.idea
+.clion*
+clion*
+build/
+install/
+log/

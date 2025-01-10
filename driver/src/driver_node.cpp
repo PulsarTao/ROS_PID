@@ -4,15 +4,15 @@
 #include "driver/driver_node.h"
 using namespace std::chrono_literals;
 void DriverNode::publish_target_vis(double x, double y, double z) {
-    visualization_msgs::msg::Marker delete_marker;
-    delete_marker.header.frame_id = "world";
-    delete_marker.header.stamp = this->get_clock()->now();
-    delete_marker.ns = "marker";
-    delete_marker.id = 0;
-    delete_marker.action = visualization_msgs::msg::Marker::DELETE;
-    marker_publisher_->publish(delete_marker);
-
-    rclcpp::sleep_for(std::chrono::milliseconds(1));
+//    visualization_msgs::msg::Marker delete_marker;
+//    delete_marker.header.frame_id = "world";
+//    delete_marker.header.stamp = this->get_clock()->now();
+//    delete_marker.ns = "marker";
+//    delete_marker.id = 0;
+//    delete_marker.action = visualization_msgs::msg::Marker::DELETE;
+//    marker_publisher_->publish(delete_marker);
+//
+//    rclcpp::sleep_for(std::chrono::milliseconds(1));
 
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "world";
@@ -57,12 +57,10 @@ void DriverNode::timer_callback() {
     this->publish_target_vis(message.target.x,message.target.y,message.target.z);
 }
 DriverNode::DriverNode() : Node("driver_node"), count(0) {
-
     auto message = driver_msgs::msg::Target();
     message.name = "targ";
     message.count = count;
     message.time = this->get_clock()->now().seconds();
-
     publisher_ = this->create_publisher<driver_msgs::msg::Target>("target", 10);
     marker_publisher_ = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
     timer_ = this->create_wall_timer(2ms, std::bind(&DriverNode::timer_callback, this));
