@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int64
 from collections import deque
 from driver_msgs.msg import Target
-
+from rcl_interfaces.msg import ParameterType, SetParametersResult
 
 class IncrementalPID:
     def __init__(self, kp, ki, kd, dt):
@@ -50,7 +50,7 @@ class PID:
         output = self.kp * error + self.ki * self.integral + self.kd * derivative
         output = [max(min(ot, self.output_limits[1]), self.output_limits[0]) for ot in output]
         self.previous_error = error
-        # print("output:",output)
+        # print("kp:",self.kp,"ki:",self.ki,"kd:",self.kd,)
         return output
 
 
@@ -63,16 +63,36 @@ class ProcessNode(Node):
             self.listener_callback,
             10
         )
+        self.declare_parameter('p', 0.01)
+        self.declare_parameter('i', 0.001)
+        self.declare_parameter('d', 0.0001)
+
         self.publisher = self.create_publisher(Target, 'command', 10)
         self.msg_window = deque(maxlen=5)
         self.timer = self.create_timer(0.01, self.timer_callback)
         self.current = [0.0, 0.0, 0.0]
-        self.pid = PID(0.01, 0.001, 0.01, 0.01)
+        kp = self.get_parameter('p').get_parameter_value().double_value
+        ki = self.get_parameter('i').get_parameter_value().double_value
+        kd = self.get_parameter('d').get_parameter_value().double_value
+        self.add_on_set_parameters_callback(self.parameter_callback)
+        # self.pid = PID(0.01, 0.001, 0.0001, 0.01)
+        self.pid = PID(kp, ki, kd, 0.01)
         # self.pid = IncrementalPID(1, 0.1, 0.01, 0.01)
 
     def listener_callback(self, msg):
         self.msg_window.append(msg)
-        self.get_logger().info(f'Received message: count={msg.count}, time={msg.time},target={msg.target}')
+        # self.get_logger().info(f'Received message: count={msg.count}, time={msg.time},target={msg.target}')
+
+    def parameter_callback(self, params):
+        for param in params:
+            print(param.type_ == ParameterType.PARAMETER_DOUBLE)
+            if param.name == 'p':
+                self.pid.kp = param.value
+            elif param.name == 'i' :
+                self.pid.ki = param.value
+            elif param.name == 'd':
+                self.pid.kd = param.value
+        return SetParametersResult(successful=True)
 
     def timer_callback(self):
         if self.msg_window:
